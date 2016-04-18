@@ -1,5 +1,5 @@
 # Ítalo Tobler Silva - nUSP 8551910
-CFLAGS = -g -Wall -std=c99
+CFLAGS = -g -Wall
 
 all: build
 
