@@ -18,7 +18,7 @@ run: build
 	./program
 
 .zip:
-	zip OrdTopologica.zip *.c *.h Makefile
+	zip trabalho_arquivos.zip *.c *.h Makefile
 
 debug: build
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./program < 1.in > test1.out
