@@ -117,7 +117,15 @@ void esvaziaFilme(FILME *filme){
 
 void imprimeFilme(FILME *filme){
 	if(filme != NULL){
-		//to do
+		printf("/--------------------------------\n");
+		printf("id       : %d\n", filme->id);
+		printf("Título   : %s\n", filme->titulo);
+		printf("descricao: %s\n", filme->descr);
+		printf("genero   : %s\n", filme->genero);
+		printf("duracao  : %d min\n", filme->dur);
+		printf("ano      : %d\n", filme->ano);
+		printf("pais     : %s\n", filme->pais);
+		printf("--------------------------------/\n");
 	}
 }
 
