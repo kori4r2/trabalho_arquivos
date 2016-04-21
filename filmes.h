@@ -11,7 +11,7 @@ FILME *criaFilme(int, int, char*, char*, char*, char*);
 void apagaFilme(FILME**);
 CATALOGO *criaCatalogo(char*);
 void apagaCatalogo(CATALOGO**);
-void inserirFilme(CATALOGO*, FILME*);
+void insereFilme(CATALOGO*, FILME**);
 void imprimeCatalogo(CATALOGO*);
 void procuraFilme(CATALOGO*, unsigned int);
 

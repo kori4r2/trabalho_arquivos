@@ -36,7 +36,21 @@ FILME *criaFilme(int ano, int dur, char *titulo, char *descr, char *pais, char *
 		}else fprintf(stderr, "criaFilme: erro na alocacao de memoria\n");
 
 		return novoFilme;
-	}else fprintf(stderr, "criaFilme: parametro invalido passado\n");
+	}else{
+		fprintf(stderr, "criaFilme: parametro invalido passado");
+		if(ano <= 0)
+			fprintf(stderr, " ano\n");
+		if(dur <= 0)
+			fprintf(stderr, " dur\n");
+		if(titulo == NULL)
+			fprintf(stderr, " titulo\n");
+		if(descr == NULL)
+			fprintf(stderr, " descr\n");
+		if(pais == NULL)
+			fprintf(stderr, " pais\n");
+		if(genero == NULL)
+			fprintf(stderr, " genero\n");
+	}
 	return NULL;
 }
 
@@ -104,14 +118,24 @@ void escreveFilme(FILE *fp, FILME *filme){
 
 void esvaziaFilme(FILME *filme){
 	if(filme != NULL){
-		if(filme->titulo != NULL)
+		if(filme->titulo != NULL){
 			free(filme->titulo);
-		if(filme->descr != NULL)
+			filme->titulo = NULL;
+		}
+		if(filme->descr != NULL){
 			free(filme->descr);
-		if(filme->pais != NULL)
+			filme->descr = NULL;
+		}
+		if(filme->pais != NULL){
 			free(filme->pais);
-		if(filme->genero != NULL)
+			filme->pais = NULL;
+		}
+		if(filme->genero != NULL){
 			free(filme->genero);
+			filme->genero = NULL;
+		}
+		filme->ano = 0;
+		filme->dur = 0;
 	}else fprintf(stderr, "esvaziaFilme: parametro invalido passado\n");
 }
 
@@ -153,7 +177,7 @@ CATALOGO *criaCatalogo(char *nomeArquivo){
 			novoCatalogo->n = 0;
 			novoCatalogo->filename = nomeArquivo;
 
-			FILE *fp = fopen(novoCatalogo->filename, "w+");
+			FILE *fp = fopen(novoCatalogo->filename, "wb+");
 			if(fp == NULL){
 				apagaCatalogo(&novoCatalogo);
 				fprintf(stderr, "criaCatalogo: erro ao criar o arquivo\n");
@@ -177,28 +201,35 @@ void apagaCatalogo(CATALOGO **catalogo){
 	}else fprintf(stderr, "apagaCatalogo: parametro invalido passado\n");
 }
 
-void inserirFilme(CATALOGO *catalogo, FILME *filme){
-	if(catalogo != NULL && filme != NULL){
-		FILE *fp = fopen(catalogo->filename, "a");
+void insereFilme(CATALOGO *catalogo, FILME **filme){
+	if(catalogo != NULL && filme != NULL && *filme != NULL){
+		FILE *fp = fopen(catalogo->filename, "ab");
 		if(fp == NULL)
-			fprintf(stderr, "inserirFilme: erro ao abrir o arquivo\n");
+			fprintf(stderr, "insereFilme: erro ao abrir o arquivo\n");
 		else{
 			catalogo->n++;
-			filme->id = catalogo->n;
-			escreveFilme(fp, filme);
-			apagaFilme(&filme);
+			(*filme)->id = catalogo->n;
+			escreveFilme(fp, *filme);
+			apagaFilme(filme);
+			fclose(fp);
 		}
-	}else fprintf(stderr, "inserirFilme: parametro invalido passado\n");
+	}else fprintf(stderr, "insereFilme: parametro invalido passado\n");
 }
 
 void imprimeCatalogo(CATALOGO *catalogo){
 	if(catalogo != NULL){
 		FILME *filme = (FILME*)malloc(sizeof(FILME));
-		FILE *fp = fopen(catalogo->filename, "r");
+		filme->titulo = NULL;
+		filme->descr = NULL;
+		filme->genero = NULL;
+		filme->pais = NULL;
+		filme->ano = 0;
+		filme->dur = 0;
+		FILE *fp = fopen(catalogo->filename, "rb");
 		if(fp == NULL)
 			fprintf(stderr, "imprimeCatalogo: erro ao abrir o arquivo\n");
 		else{
-			while(leFilme(fp, filme)){
+			while(leFilme(fp, filme) != 0){
 				imprimeFilme(filme);
 				esvaziaFilme(filme);
 			}
@@ -214,7 +245,13 @@ void procuraFilme(CATALOGO *catalogo, unsigned int id){
 		int curId, aux;
 		char caractere;
 		FILME *filme = (FILME*)malloc(sizeof(FILME));
-		FILE *fp = fopen(catalogo->filename, "r");
+		filme->titulo = NULL;
+		filme->descr = NULL;
+		filme->genero = NULL;
+		filme->pais = NULL;
+		filme->ano = 0;
+		filme->dur = 0;
+		FILE *fp = fopen(catalogo->filename, "rb");
 		if(fp == NULL)
 			fprintf(stderr, "procuraFilme: erro ao abrir o arquivo\n");
 		else{
@@ -249,6 +286,5 @@ void procuraFilme(CATALOGO *catalogo, unsigned int id){
 			fclose(fp);
 		}
 		apagaFilme(&filme);
-	}
-	fprintf(stderr, "procuraFilme: parametro invalido passado\n");
+	}else fprintf(stderr, "procuraFilme: parametro invalido passado\n");
 }

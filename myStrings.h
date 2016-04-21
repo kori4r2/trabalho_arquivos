@@ -7,7 +7,7 @@
 #include <string.h>
 #include <ctype.h>
 
-char *myStrdup(char*);
+char *myStrdup(const char*);
 char *getWord(FILE*);
 char *readLimitedString(FILE*, int);
 char *myGetLine(FILE*);

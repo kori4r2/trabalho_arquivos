@@ -2,7 +2,7 @@
 #include "myStrings.h"
 
 // Aloca a memoria necessaria para criar uma copia da string passada como argumento
-char *myStrdup(char *string){
+char *myStrdup(const char *string){
 	char *duplicate = (char*)malloc(sizeof(char) * (strlen(string) + 1));
 	if(duplicate == NULL) return NULL;
 	strcpy(duplicate, string);
