@@ -1,3 +1,6 @@
+// Alisson Mateus de Oliveira Magalhães - nUSP 8066287
+// Ítalo Tobler Silva - nUSP 8551910
+
 #ifndef _FILMES_H_
 #define _FILMES_H_
 

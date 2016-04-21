@@ -1,4 +1,6 @@
+// Alisson Mateus de Oliveira Magalhães - nUSP 8066287
 // Ítalo Tobler Silva - nUSP 8551910
+
 #include "myStrings.h"
 
 // Aloca a memoria necessaria para criar uma copia da string passada como argumento

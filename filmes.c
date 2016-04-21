@@ -1,3 +1,6 @@
+// Alisson Mateus de Oliveira Magalhães - nUSP 8066287
+// Ítalo Tobler Silva - nUSP 8551910
+
 #include "filmes.h"
 
 #define FIM_CAMPO '|'
@@ -144,11 +147,11 @@ void imprimeFilme(FILME *filme){
 		printf("/--------------------------------\n");
 		printf("id       : %d\n", filme->id);
 		printf("Título   : %s\n", filme->titulo);
-		printf("descricao: %s\n", filme->descr);
-		printf("genero   : %s\n", filme->genero);
-		printf("duracao  : %d min\n", filme->dur);
-		printf("ano      : %d\n", filme->ano);
-		printf("pais     : %s\n", filme->pais);
+		printf("Descrição: %s\n", filme->descr);
+		printf("Gênero   : %s\n", filme->genero);
+		printf("Duração  : %d min\n", filme->dur);
+		printf("Ano      : %d\n", filme->ano);
+		printf("País     : %s\n", filme->pais);
 		printf("--------------------------------/\n");
 	}
 }

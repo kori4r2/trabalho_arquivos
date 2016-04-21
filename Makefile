@@ -1,4 +1,6 @@
+# Alisson Mateus de Oliveira Magalhães - nUSP 8066287
 # Ítalo Tobler Silva - nUSP 8551910
+
 CFLAGS = -g -Wall
 
 all: build
