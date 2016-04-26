@@ -40,8 +40,8 @@ FILME *criaFilme(int ano, int dur, char *titulo, char *descr, char *pais, char *
 
 		return novoFilme;
 	}else{
-		fprintf(stderr, "criaFilme: parametro invalido passado");
-		if(ano <= 0)
+		fprintf(stderr, "criaFilme: parametro invalido passado\n");
+/*		if(ano <= 0)
 			fprintf(stderr, " ano\n");
 		if(dur <= 0)
 			fprintf(stderr, " dur\n");
@@ -52,7 +52,7 @@ FILME *criaFilme(int ano, int dur, char *titulo, char *descr, char *pais, char *
 		if(pais == NULL)
 			fprintf(stderr, " pais\n");
 		if(genero == NULL)
-			fprintf(stderr, " genero\n");
+			fprintf(stderr, " genero\n");*/
 	}
 	return NULL;
 }
@@ -93,8 +93,9 @@ int leFilme(FILE *fp, FILME *filme){
 	filme->genero[i-1] = '\0';
 
 	fread(&fimRegistro, sizeof(char), 1, fp);
-	if(fimRegistro != FIM_REGISTRO);
-		fprintf(stderr, "leFilme: erro na organizacao do arquivo\n");
+	if(fimRegistro != FIM_REGISTRO)
+		fprintf(stderr, "leFilme: erro na organizacao do arquivo(%c, not %c)\n", fimRegistro, FIM_REGISTRO);
+
 	return 1;
 }
 
@@ -270,10 +271,18 @@ void procuraFilme(CATALOGO *catalogo, unsigned int id){
 					fread(&caractere, sizeof(char), 1, fp);
 					offset++;
 				}while(caractere != FIM_CAMPO);
+				do{
+					fread(&caractere, sizeof(char), 1, fp);
+					offset++;
+				}while(caractere != FIM_CAMPO);
+				do{
+					fread(&caractere, sizeof(char), 1, fp);
+					offset++;
+				}while(caractere != FIM_CAMPO);
 				fread(&caractere, sizeof(char), 1, fp);
 				offset++;
 				if(caractere != FIM_REGISTRO){
-					fprintf(stderr, "procuraFilme: erro na organizacao do arquivo\n");
+					fprintf(stderr, "procuraFilme: erro na organizacao do arquivo (%c, not %c)\n", caractere, FIM_REGISTRO);
 					apagaFilme(&filme);
 					fclose(fp);
 					return;

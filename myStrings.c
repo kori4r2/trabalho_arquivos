@@ -5,6 +5,7 @@
 
 // Aloca a memoria necessaria para criar uma copia da string passada como argumento
 char *myStrdup(const char *string){
+	if(string == NULL) return NULL;
 	char *duplicate = (char*)malloc(sizeof(char) * (strlen(string) + 1));
 	if(duplicate == NULL) return NULL;
 	strcpy(duplicate, string);
@@ -14,6 +15,7 @@ char *myStrdup(const char *string){
 // Le uma palavra da stream de dados passada. Começa a ler no primeiro caractere alfanumerico.
 // As condicoes de parada sao espaço, quebra de linha e fim de arquivo.
 char *getWord(FILE *stream){
+	if(stream == NULL) return NULL;
 	char input;
 	char *word = NULL;
 	int size = 0;
@@ -36,6 +38,7 @@ char *getWord(FILE *stream){
 
 // Funciona da mesma maneira que getWord(), mas nao tem o espaco como condicao de parada
 char *myGetLine(FILE *stream){
+	if(stream == NULL) return NULL;
 	char input;
 	char *string = NULL;
 	int size = 0;
@@ -58,6 +61,7 @@ char *myGetLine(FILE *stream){
 
 // Funciona da mesma maneira que myGetLine, mas possui um tamanho maximo e aloca a string com esse tamanho obrigatoriamente
 char *readLimitedString(FILE *stream, int maxSize){
+	if(stream == NULL || maxSize < 1) return NULL;
 	char *string = (char*)malloc(sizeof(char) * maxSize);
 	memset(string, 0, sizeof(char) * maxSize);
 	if(string == NULL){
