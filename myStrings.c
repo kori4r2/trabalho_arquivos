@@ -84,3 +84,21 @@ char *readLimitedString(FILE *stream, int maxSize){
 	string[size] = '\0';
 	return string;
 }
+
+void printLongString(const char *string, int limit){
+	if(string != NULL){
+		int i = 0, j;
+		while(string[i] != '\0'){
+			for(j = 0; j < limit-10 && string[i] != '\0'; j++){
+				printf("%c", string[i++]);
+			}
+			while(string[i] != '\0' && string[i] != ' '){
+				printf("%c", string[i++]);
+			}
+			if(string[i] == ' '){
+				printf("\n");
+				i++;
+			}
+		}
+	}
+}

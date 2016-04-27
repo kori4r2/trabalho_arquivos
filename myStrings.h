@@ -50,5 +50,17 @@ char *readLimitedString(FILE*, int);
           char* : string criada; NULL - caso erro de alocacao ou parametro invalido;
 */
 char *myGetLine(FILE*);
+/*------------------------------------------------------------------------------------------------------------
+   printLongString()
+        Funcao que imprime uma string muito grande de modo que ela tenha um numero maximo de caracteres
+	impressos por linha para facilitar visualizacao e melhorar formatacao do texto. Quando uma linha
+	terminar em uma palavra muito grande o limite estabelecido pode ser ultrapassado.
+        - Parametros
+          const char* : string a ser impressa;
+	  int : limite (aproximado) de caracteres a ser impresso por linha;
+        - Retorno
+          void
+*/
+void printLongString(const char*, int);
 
 #endif
