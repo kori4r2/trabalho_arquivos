@@ -1,0 +1,22 @@
+1994|142|The Shawshank Redemption|Two imprisoned men bond over a number of years, finding solace and eventual redemption through acts of common decency.|USA|Crime, Drama
+1972|175|The Godfather|The aging patriarch of an organized crime dynasty transfers control of his clandestine empire to his reluctant son.|USA|Crime, Drama
+1974|202|The Godfather: Part II|The early life and career of Vito Corleone in 1920s New York is portrayed while his son, Michael, expands and tightens his grip on his crime syndicate stretching from Lake Tahoe, Nevada to pre-revolution 1958 Cuba.|USA|Crime, Drama
+2008|152|The Dark Knight|When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, the caped crusader must come to terms with one of the greatest psychological tests of his ability to fight injustice.|USA|Action, Crime, Drama
+1993|195|Schindler's List|In Poland during World War II, Oskar Schindler gradually becomes concerned for his Jewish workforce after witnessing their persecution by the Nazis.|USA|Biography, Drama, History
+1957|96|12 Angry Men|A jury holdout attempts to prevent a miscarriage of justice by forcing his colleagues to reconsider the evidence.|USA|Crime, Drama
+1994|154|Pulp Fiction|The lives of two mob hit men, a boxer, a gangster's wife, and a pair of diner bandits intertwine in four tales of violence and redemption.|USA|Crime, Drama
+2003|201|The Lord of the Rings: The Return of the King|Gandalf and Aragorn lead the World of Men against Sauron's army to draw his gaze from Frodo and Sam as they approach Mount Doom with the One Ring.|USA|Adventure, Drama, Fantasy
+1966|161|The Good, the Bad and the Ugly|A bounty hunting scam joins two men in an uneasy alliance against a third in a race to find a fortune in gold buried in a remote cemetery.|USA|Western
+1999|139|Fight Club|An insomniac office worker, looking for a way to change his life, crosses paths with a devil-may-care soap maker, forming an underground fight club that evolves into something much, much more...|USA|Drama
+2001|178|The Lord of the Rings: The Fellowship of the Ring|A meek Hobbit and eight companions set out on a journey to destroy the One Ring and the Dark Lord Sauron.|USA|Adventure, Drama, Fantasy
+1980|124|Star Wars: Episode V - The Empire Strikes Back|After the rebels have been brutally overpowered by the Empire on their newly established base, Luke Skywalker takes advanced Jedi training with Master Yoda, while his friends are pursued by Darth Vader as part of his plan to capture Luke.|USA|Action, Adventure, Fantasy
+1994|142|Forrest Gump|Forrest Gump, while not intelligent, has accidentally been present at many historic moments, but his true love, Jenny Curran, eludes him.|USA|Drama, Romance
+2010|148|Inception|A thief, who steals corporate secrets through use of dream-sharing technology, is given the inverse task of planting an idea into the mind of a CEO.|USA|Action, Mystery, Sci-Fi
+2002|179|The Lord of the Rings: The Two Towers|While Frodo and Sam edge closer to Mordor with the help of the shifty Gollum, the divided fellowship makes a stand against Sauron's new ally, Saruman, and his hordes of Isengard.|USA|Action, Adventure, Drama
+1975|133|One Flew Over the Cuckoo's Nest|A criminal pleads insanity after getting into trouble again and once in the mental institution rebels against the oppressive nurse and rallies up the scared patients.|USA|Drama
+1990|146|Goodfellas|Henry Hill and his friends work their way up through the mob hierarchy.|USA|Biography, Crime, Drama
+1999|136|The Matrix|A computer hacker learns from mysterious rebels about the true nature of his reality and his role in the war against its controllers.|USA|Action, Sci-Fi
+1954|207|Seven Samurai|A poor village under attack by bandits recruits seven unemployed samurai to help them defend themselves.|USA|Drama
+1977|121|Star Wars: Episode IV - A New Hope|Luke Skywalker joins forces with a Jedi Knight, a cocky pilot, a wookiee and two droids to save the galaxy from the Empire's world-destroying battle-station, while also attempting to rescue Princess Leia from the evil Darth Vader.|USA|Action, Adventure, Fantasy
+2002|130|City of God|Two boys growing up in a violent neighborhood of Rio de Janeiro take different paths: one becomes a photographer, the other a drug dealer.|USA|Crime, Drama
+1995|127|Se7en|Two detectives, a rookie and a veteran, hunt a serial killer who uses the seven deadly sins as his modus operandi.|USA|Crime, Drama, Mystery

@@ -16,14 +16,14 @@ typedef struct catalogo CATALOGO;
         - Parametros
           int : ano do filme;
           int : duracao em minutos do filme;
-	  char* : titulo do filme;
-	  char* : descricao do filme;
-	  char* : pais onde o filme foi gravado;
-	  char* : genero do filme;
+	  const char* : titulo do filme;
+	  const char* : descricao do filme;
+	  const char* : pais onde o filme foi gravado;
+	  const char* : genero do filme;
         - Retorno
           FILME* : ponteiro para o filme criado; NULL - caso erro de alocacao ou parametro invalido;
 */
-FILME *criaFilme(int, int, char*, char*, char*, char*);
+FILME *criaFilme(int, int, const char*, const char*, const char*, const char*);
 /*------------------------------------------------------------------------------------------------------------
    apagaFilme()
         Funcao que apaga um filme alocado em memoria heap, setando NULL no seu ponteiro.

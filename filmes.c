@@ -24,7 +24,7 @@ struct catalogo{
 
 // Funcoes de filme-------------------------------------------------------------------------------------------
 
-FILME *criaFilme(int ano, int dur, char *titulo, char *descr, char *pais, char *genero){
+FILME *criaFilme(int ano, int dur, const char *titulo, const char *descr, const char *pais, const char *genero){
 	if(ano > 0 && dur > 0 && titulo != NULL && descr != NULL && pais != NULL && genero != NULL){
 		FILME *novoFilme = (FILME*)malloc(sizeof(FILME));
 
@@ -32,10 +32,10 @@ FILME *criaFilme(int ano, int dur, char *titulo, char *descr, char *pais, char *
 			novoFilme->id = 0;
 			novoFilme->ano = ano;
 			novoFilme->dur = dur;
-			novoFilme->titulo = titulo;
-			novoFilme->descr = descr;
-			novoFilme->pais = pais;
-			novoFilme->genero = genero;
+			novoFilme->titulo = myStrdup(titulo);
+			novoFilme->descr = myStrdup(descr);
+			novoFilme->pais = myStrdup(pais);
+			novoFilme->genero = myStrdup(genero);
 		}else fprintf(stderr, "criaFilme: erro na alocacao de memoria\n");
 
 		return novoFilme;
