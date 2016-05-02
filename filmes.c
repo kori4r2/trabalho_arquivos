@@ -6,7 +6,6 @@
 
 #define FIM_CAMPO '|'
 #define FIM_REGISTRO '^'
-#define TAM_FIXO (sizeof(unsigned int) + (2 * sizeof(int)))
 
 struct filme{
 	unsigned int id;
@@ -26,9 +25,11 @@ struct catalogo{
 // Funcoes de filme-------------------------------------------------------------------------------------------
 
 FILME *criaFilme(int ano, int dur, const char *titulo, const char *descr, const char *pais, const char *genero){
+	// Checa parametros
 	if(ano > 0 && dur > 0 && titulo != NULL && descr != NULL && pais != NULL && genero != NULL){
+		// Aloca memoria
 		FILME *novoFilme = (FILME*)malloc(sizeof(FILME));
-
+		// Armazena informacoes
 		if(novoFilme != NULL){
 			novoFilme->id = 0;
 			novoFilme->ano = ano;
@@ -50,17 +51,19 @@ int leFilme(FILE *fp, FILME *filme){
 
 	int i;
 	char fimRegistro;
+	// Le os campos te tamanho fixo
 	fread(&filme->id, sizeof(unsigned int), 1, fp);
 	if(feof(fp)) return 0;
 	fread(&filme->ano, sizeof(int), 1, fp);
 	fread(&filme->dur, sizeof(int), 1, fp);
-
+	// Le e armazena um campo variavel contendo uma string
 	i = 0;
 	do{
 		filme->titulo = (char*)realloc(filme->titulo, sizeof(char) * (i+1));
 		fread(filme->titulo+i, sizeof(char), 1, fp);
 	}while(filme->titulo[i++] != FIM_CAMPO);
 	filme->titulo[i-1] = '\0';
+	// Repete o procedimento para os outros 3 campos
 	i = 0;
 	do{
 		filme->descr = (char*)realloc(filme->descr, sizeof(char) * (i+1));
@@ -79,8 +82,9 @@ int leFilme(FILE *fp, FILME *filme){
 		fread(filme->genero+i, sizeof(char), 1, fp);
 	}while(filme->genero[i++] != FIM_CAMPO);
 	filme->genero[i-1] = '\0';
-
+	// Le um caractere e compara com o caractere indicador de fim de registro
 	fread(&fimRegistro, sizeof(char), 1, fp);
+	// Se for diferente, indica que houve erro na organizacao do arquivo
 	if(fimRegistro != FIM_REGISTRO)
 		fprintf(stderr, "leFilme: erro na organizacao do arquivo(%c, not %c)\n", fimRegistro, FIM_REGISTRO);
 
@@ -90,9 +94,11 @@ int leFilme(FILE *fp, FILME *filme){
 void escreveFilme(FILE *fp, FILME *filme){
 	int i;
 	char fimCampo = FIM_CAMPO, fimRegistro = FIM_REGISTRO;
+	// Escreve no arquivo todos os campos do filme
 	fwrite(&filme->id, sizeof(unsigned int), 1, fp);
 	fwrite(&filme->ano, sizeof(int), 1, fp);
 	fwrite(&filme->dur, sizeof(int), 1, fp);
+	// No caso das strings substitui o '\0' pelo caractere indicador de fim de campo
 	for(i = 0; filme->titulo[i] != '\0'; i++)
 		fwrite(filme->titulo+i, sizeof(char), 1, fp);
 	fwrite(&fimCampo, sizeof(char), 1, fp);
@@ -105,11 +111,13 @@ void escreveFilme(FILE *fp, FILME *filme){
 	for(i = 0; filme->genero[i] != '\0'; i++)
 		fwrite(filme->genero+i, sizeof(char), 1, fp);
 	fwrite(&fimCampo, sizeof(char), 1, fp);
+	// Escreve o caractere indicador de fim de registro
 	fwrite(&fimRegistro, sizeof(char), 1, fp);
 }
 
 void esvaziaFilme(FILME *filme){
 	if(filme != NULL){
+		// Transforma todos os campos em 0 ou NULL, liberando memoria alocada
 		if(filme->titulo != NULL){
 			free(filme->titulo);
 			filme->titulo = NULL;
@@ -170,7 +178,8 @@ CATALOGO *criaCatalogo(const char *nomeArquivo){
 		if(novoCatalogo != NULL){
 			novoCatalogo->n = 0;
 			novoCatalogo->filename = myStrdup(nomeArquivo);
-
+			// Assim que salva o nome de arquivo, tenta criar um novo arquivo, apagando qualquer
+			// arquivo anterior de mesmo nome
 			FILE *fp = fopen(novoCatalogo->filename, "wb+");
 			if(fp == NULL){
 				apagaCatalogo(&novoCatalogo);
@@ -196,13 +205,17 @@ void apagaCatalogo(CATALOGO **catalogo){
 }
 
 void insereFilme(CATALOGO *catalogo, FILME **filme){
+	// Checa se os parametros sao validos e tenta abrir o arquivo de dados
 	if(catalogo != NULL && filme != NULL && *filme != NULL){
 		FILE *fp = fopen(catalogo->filename, "ab");
 		if(fp == NULL)
 			fprintf(stderr, "insereFilme: erro ao abrir o arquivo\n");
 		else{
+			// Incrementa o contador do catalogo
 			catalogo->n++;
+			// Determina o id do filme sendo salvo
 			(*filme)->id = catalogo->n;
+			// Escreve as informacoes no arquivo e apaga o filme
 			escreveFilme(fp, *filme);
 			apagaFilme(filme);
 			fclose(fp);
@@ -212,6 +225,7 @@ void insereFilme(CATALOGO *catalogo, FILME **filme){
 
 void imprimeCatalogo(CATALOGO *catalogo){
 	if(catalogo != NULL){
+		// Cria um filme vazio
 		FILME *filme = (FILME*)malloc(sizeof(FILME));
 		filme->titulo = NULL;
 		filme->descr = NULL;
@@ -223,7 +237,9 @@ void imprimeCatalogo(CATALOGO *catalogo){
 		if(fp == NULL)
 			fprintf(stderr, "imprimeCatalogo: erro ao abrir o arquivo\n");
 		else{
+			// Le todos os filmes salvos no arquivo
 			while(leFilme(fp, filme) != 0){
+				// Imprime as informacoes e esvazia o filme novamente
 				imprimeFilme(filme);
 				esvaziaFilme(filme);
 			}
@@ -235,9 +251,11 @@ void imprimeCatalogo(CATALOGO *catalogo){
 
 void procuraFilme(CATALOGO *catalogo, unsigned int id){
 	if(catalogo != NULL && id > 0){
+		// offset armazena a posicao do filme buscado
 		long int offset = 0;
 		int curId, aux;
 		char caractere;
+		// Cria um filme vazio
 		FILME *filme = (FILME*)malloc(sizeof(FILME));
 		filme->titulo = NULL;
 		filme->descr = NULL;
@@ -249,12 +267,19 @@ void procuraFilme(CATALOGO *catalogo, unsigned int id){
 		if(fp == NULL)
 			fprintf(stderr, "procuraFilme: erro ao abrir o arquivo\n");
 		else{
+			// Le o id de todos os filmes com id diferente do desejado no arquivo
 			while((fread(&curId, sizeof(unsigned int), 1, fp)) > 0 && curId != id){
+				// Tendo lido um filme diferente do procurado pula os proximos dois
+				// campos de tamanho fixo
 				fread(&aux, sizeof(int), 1, fp);
 				fread(&aux, sizeof(int), 1, fp);
+				// Incrementa offset
 				offset += sizeof(unsigned int) + (2 * sizeof(int));
+				// Le todos os caracteres ate o fim de campo ser encontrado
+				// para pular o campo de tamanho variavel para os 4 campos
 				do{
 					fread(&caractere, sizeof(char), 1, fp);
+					// Incrementa o offset enquanto le
 					offset++;
 				}while(caractere != FIM_CAMPO);
 				do{
@@ -269,8 +294,10 @@ void procuraFilme(CATALOGO *catalogo, unsigned int id){
 					fread(&caractere, sizeof(char), 1, fp);
 					offset++;
 				}while(caractere != FIM_CAMPO);
+				// Le um ultimo caractere que deve ser o indicador de fim de registro
 				fread(&caractere, sizeof(char), 1, fp);
 				offset++;
+				// Caso nao seja, indica o erro na organizacao do arquivo
 				if(caractere != FIM_REGISTRO){
 					fprintf(stderr, "procuraFilme: erro na organizacao do arquivo (%c, not %c)\n", caractere, FIM_REGISTRO);
 					apagaFilme(&filme);
@@ -278,11 +305,14 @@ void procuraFilme(CATALOGO *catalogo, unsigned int id){
 					return;
 				}
 			}
+			// Se a busca terminar e o filme for encontrado
 			if(!feof(fp) && curId == id){
+				// Imprime o filme desejado
 				fseek(fp, offset, SEEK_SET);
 				leFilme(fp, filme);
 				imprimeFilme(filme);
 			}else{
+				// Se o filme nao for econtrado, avisa o usuario
 				printf("Filme nao encontrado\n");
 			}
 			fclose(fp);

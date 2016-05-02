@@ -31,18 +31,20 @@ int main(int argc, char *argv[]){
 
 	// Gera a seed para a função rand()
 	srand(time(NULL));
-	//Cria Catalogo
+	// Cria Catalogo
 	CATALOGO *c = criaCatalogo("filmes.data");
 	if(c != NULL)
 		printf("Catalogo criado\n");
 	else
 		exit(1);
 
+	// Obtem os 100 filmes do arquivo texto e os armazena em ordem aleatoria
 	geracaoAleatoria100Filmes(c);
 
 	if(WINDOWS) system("cls"); //windows
 	else if(LINUX) system("clear"); //linux
 	do{
+		// Exibe o menu
 		printf("\t\tSEJA BEM VINDO AO NOSSO ACERVO VIRTUAL DE FILMES!!\t\t\n\n");
 		printf("O que deseja fazer?\n");
 		printf("1 - Listar todo o acervo de filmes\n");
@@ -54,6 +56,8 @@ int main(int argc, char *argv[]){
 		if(op == 1){
 			if(WINDOWS) system("cls"); //windows
 			else if(LINUX) system("clear"); //linux
+
+			// Chama imprimeCatalogo para exibir todos os filmes
 			printf("Lista de todos os filmes do nosso acervo:\n\n");
 			imprimeCatalogo(c);
 			printf("\n\nCatalogo Impresso!!");
@@ -62,6 +66,7 @@ int main(int argc, char *argv[]){
 			if(WINDOWS) system("cls"); //windows
 			else if(LINUX) system("clear"); //linux
 
+			// Le um id a ser buscado e chama procuraFilme com esse id
 			printf("Digite o codigo do filme: ");
 			scanf("%d", &codigoFilme);
 			procuraFilme(c, codigoFilme);
@@ -81,16 +86,20 @@ int main(int argc, char *argv[]){
 	return 0;
 }
 
-void geracaoAleatoria100Filmes(CATALOGO* c) {
+void geracaoAleatoria100Filmes(CATALOGO* c){
 	char *titulo, *pais, *descr, *genero;
 	char *linha_entrada;
+	// filmes armazena todas as linhas do arquivo de texto
 	char **filmes = (char**)malloc(sizeof(char*) * 100);
 	int ano, dur, num_filmes, i;
 	FILME* filme;
 	FILE* entrada;
 
 	num_filmes = 0;
+	// Tenta abrir o arquivo de texto
 	if((entrada = fopen("100filmes.txt", "r"))) {
+		// Caso consiga, le todas as linhas do arquivo de texto armazenando
+		// cada linha em uma posicao do vetor filmes
 		while((linha_entrada = myGetLine(entrada)) != NULL) {
 			filmes[num_filmes++] = linha_entrada;
 		}
@@ -99,11 +108,14 @@ void geracaoAleatoria100Filmes(CATALOGO* c) {
 		exit(1);
 	}
 
+	// O vetor aux_shuffle armazena a ordem em que as linhas devem ser inseridas
 	int aux_shuffle[num_filmes];
 	for(i = 0; i < num_filmes; i++)
 		aux_shuffle[i] = i;
+	// O vetor aux_shuffle e aleatorizado
 	shuffle(aux_shuffle, num_filmes);
 
+	// Os filmes sao inseridos um apos o outro na ordem aleatoria
 	for(i = 0; i < num_filmes; i++) {
 		ano = atoi(strtok(filmes[aux_shuffle[i]], "|"));
 		dur = atoi(strtok(NULL, "|"));
@@ -115,6 +127,7 @@ void geracaoAleatoria100Filmes(CATALOGO* c) {
 		insereFilme(c, &filme);
 	}
 
+	// Libera a memoria alocada antes do fim da funcao
 	for(i = 0; i < num_filmes; i++) {
 		free(filmes[i]);
 	}
@@ -122,8 +135,9 @@ void geracaoAleatoria100Filmes(CATALOGO* c) {
 	fclose(entrada);
 }
 
-void shuffle(int* aux_shuffle, int numFilmes) {
+void shuffle(int* aux_shuffle, int numFilmes){
 	int i, j, t;
+	// Troca cada posicao do vetor com uma posicao aleatoria
 	for (i = 0; i < numFilmes - 1; i++) {
 		j = (rand() % (numFilmes-1));
 		t = aux_shuffle[j];
