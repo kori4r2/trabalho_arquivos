@@ -121,10 +121,10 @@ void geracaoAleatoria100Filmes(CATALOGO* c) {
 	fclose(entrada);
 }
 
-void shuffle(int* aux_shuffle, int num_filmes) {
+void shuffle(int* aux_shuffle, int numFilmes) {
 	int i, j, t;
-	for (i = 0; i < num_filmes - 1; i++) {
-		j = i + rand() / (RAND_MAX / (num_filmes - i) + 1);
+	for (i = 0; i < numFilmes - 1; i++) {
+		j = (rand() % (numFilmes-1));
 		t = aux_shuffle[j];
 		aux_shuffle[j] = aux_shuffle[i];
 		aux_shuffle[i] = t;
