@@ -63,7 +63,7 @@ int main(int argc, char *argv[]){
 
 			printf("Digite o codigo do filme: ");
 			scanf("%d", &codigoFilme);
-			procuraFilme(c, 2);
+			procuraFilme(c, codigoFilme);
 			printf("\n\n\n");
 		}else{
 			printf("Operacao invalida!\n");
