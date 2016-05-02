@@ -28,14 +28,15 @@ void geracaoAleatoria100Filmes(CATALOGO*);
 
 int main(int argc, char *argv[]){
 	int op, codigoFilme;
-	char *filename;
 
 	// Gera a seed para a função rand()
 	srand(time(NULL));
 	//Cria Catalogo
-	filename = myStrdup("filmes.data");
-	CATALOGO *c = criaCatalogo(filename);
-	printf("catalogo criado\n");
+	CATALOGO *c = criaCatalogo("filmes.data");
+	if(c != NULL)
+		printf("Catalogo criado\n");
+	else
+		exit(1);
 
 	geracaoAleatoria100Filmes(c);
 

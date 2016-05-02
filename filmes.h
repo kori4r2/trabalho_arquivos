@@ -40,11 +40,11 @@ void apagaFilme(FILME**);
 	armazenar os dados utilizando o nome passado. Caso ja exista um arquivo com o nome passado, ele sera
 	sobreescrito.
         - Parametros
-	  char* : string contendo o nome do arquivo a ser criado
+	  const char* : string contendo o nome do arquivo a ser criado
         - Retorno
           CATALOGO* : ponteiro para o catalogo criado; NULL - caso erro de alocacao ou parametro invalido;
 */
-CATALOGO *criaCatalogo(char*);
+CATALOGO *criaCatalogo(const char*);
 /*------------------------------------------------------------------------------------------------------------
    apagaCatalogo()
         Funcao que apaga um catalogo alocado em memoria heap, setando NULL no seu ponteiro.

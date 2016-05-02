@@ -40,21 +40,8 @@ FILME *criaFilme(int ano, int dur, const char *titulo, const char *descr, const 
 		}else fprintf(stderr, "criaFilme: erro na alocacao de memoria\n");
 
 		return novoFilme;
-	}else{
-		fprintf(stderr, "criaFilme: parametro invalido passado\n");
-/*		if(ano <= 0)
-			fprintf(stderr, " ano\n");
-		if(dur <= 0)
-			fprintf(stderr, " dur\n");
-		if(titulo == NULL)
-			fprintf(stderr, " titulo\n");
-		if(descr == NULL)
-			fprintf(stderr, " descr\n");
-		if(pais == NULL)
-			fprintf(stderr, " pais\n");
-		if(genero == NULL)
-			fprintf(stderr, " genero\n");*/
-	}
+	}else fprintf(stderr, "criaFilme: parametro invalido passado\n");
+	
 	return NULL;
 }
 
@@ -177,12 +164,12 @@ void apagaFilme(FILME **filme){
 
 //Funcoes de catalogo--------------------------------------------------------------------------------
 
-CATALOGO *criaCatalogo(char *nomeArquivo){
+CATALOGO *criaCatalogo(const char *nomeArquivo){
 	if(nomeArquivo != NULL){
 		CATALOGO *novoCatalogo = (CATALOGO*)malloc(sizeof(CATALOGO));
 		if(novoCatalogo != NULL){
 			novoCatalogo->n = 0;
-			novoCatalogo->filename = nomeArquivo;
+			novoCatalogo->filename = myStrdup(nomeArquivo);
 
 			FILE *fp = fopen(novoCatalogo->filename, "wb+");
 			if(fp == NULL){
