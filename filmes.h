@@ -84,5 +84,15 @@ void imprimeCatalogo(CATALOGO*);
           void
 */
 void procuraFilme(CATALOGO*, unsigned int);
+/*------------------------------------------------------------------------------------------------------------
+   shuffle()
+        Funcao que aleatoriza um vetor de inteiros.
+        - Parametros
+          int* : vetor de inteiros a ser aleatorizado;
+          int : tamanho do vetor de inteiros;
+        - Retorno
+          void
+*/
+void shuffle(int*, int);
 
 #endif

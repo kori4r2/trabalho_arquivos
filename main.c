@@ -23,7 +23,6 @@
 #include <time.h>
 
 
-void shuffle(int*, int);
 void geracaoAleatoria100Filmes(CATALOGO*);
 
 int main(int argc, char *argv[]){
@@ -133,15 +132,4 @@ void geracaoAleatoria100Filmes(CATALOGO* c){
 	}
 	free(filmes);
 	fclose(entrada);
-}
-
-void shuffle(int* aux_shuffle, int numFilmes){
-	int i, j, t;
-	// Troca cada posicao do vetor com uma posicao aleatoria
-	for (i = 0; i < numFilmes - 1; i++) {
-		j = (rand() % (numFilmes-1));
-		t = aux_shuffle[j];
-		aux_shuffle[j] = aux_shuffle[i];
-		aux_shuffle[i] = t;
-	}
 }

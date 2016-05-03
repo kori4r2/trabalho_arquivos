@@ -19,6 +19,7 @@ struct filme{
 
 struct catalogo{
 	int n;
+	int *idList;
 	char *filename;
 };
 
@@ -142,7 +143,7 @@ void esvaziaFilme(FILME *filme){
 void imprimeFilme(FILME *filme){
 	if(filme != NULL){
 		printf("/-------------------------------------------------------------------------------\n");
-		printf("id       : %d\n", filme->id);
+		printf("id       : %03d\n", filme->id);
 		printf("Título   : %s\n", filme->titulo);
 		printf("Descrição:\n   ");
 		printLongString(filme->descr, 75);
@@ -174,9 +175,21 @@ void apagaFilme(FILME **filme){
 
 CATALOGO *criaCatalogo(const char *nomeArquivo){
 	if(nomeArquivo != NULL){
+		int i;
 		CATALOGO *novoCatalogo = (CATALOGO*)malloc(sizeof(CATALOGO));
 		if(novoCatalogo != NULL){
 			novoCatalogo->n = 0;
+			// O vetor idList armazena o id dos filmes que serao inseridos
+			novoCatalogo->idList = (int*)malloc(sizeof(int) * 100);
+			if(novoCatalogo->idList == NULL){
+				apagaCatalogo(&novoCatalogo);
+				fprintf(stderr, "criaCatalogo: erro de alocacao de memoria\n");
+			}
+			// Os valores do vetor sao inicializados
+			for(i = 0; i < 100; i++)
+				novoCatalogo->idList[i] = i;
+			// E embaralhados
+			shuffle(novoCatalogo->idList, 100);
 			novoCatalogo->filename = myStrdup(nomeArquivo);
 			// Assim que salva o nome de arquivo, tenta criar um novo arquivo, apagando qualquer
 			// arquivo anterior de mesmo nome
@@ -211,10 +224,9 @@ void insereFilme(CATALOGO *catalogo, FILME **filme){
 		if(fp == NULL)
 			fprintf(stderr, "insereFilme: erro ao abrir o arquivo\n");
 		else{
-			// Incrementa o contador do catalogo
-			catalogo->n++;
-			// Determina o id do filme sendo salvo
-			(*filme)->id = catalogo->n;
+			// Determina o id do filme sendo salvo e
+			// incrementa o contador do catalogo
+			(*filme)->id = catalogo->idList[(catalogo->n++)%100];
 			// Escreve as informacoes no arquivo e apaga o filme
 			escreveFilme(fp, *filme);
 			apagaFilme(filme);
@@ -319,4 +331,15 @@ void procuraFilme(CATALOGO *catalogo, unsigned int id){
 		}
 		apagaFilme(&filme);
 	}else fprintf(stderr, "procuraFilme: parametro invalido passado\n");
+}
+
+void shuffle(int* aux_shuffle, int numFilmes){
+	int i, j, t;
+	// Troca cada posicao do vetor com uma posicao aleatoria
+	for (i = 0; i < numFilmes - 1; i++) {
+		j = (rand() % (numFilmes-1));
+		t = aux_shuffle[j];
+		aux_shuffle[j] = aux_shuffle[i];
+		aux_shuffle[i] = t;
+	}
 }
