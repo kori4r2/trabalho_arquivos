@@ -1,5 +1,6 @@
 # Alisson Mateus de Oliveira Magalhães - nUSP 8066287
 # Ítalo Tobler Silva - nUSP 8551910
+# Pedro Henrique Siqueira de Oliveira - nUSP 8922006
 
 CFLAGS = -g -Wall
 
