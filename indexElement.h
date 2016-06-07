@@ -12,6 +12,6 @@ void readIdxElement(INDEXELEMENT*, FILE*);
 void writeIdxElement(INDEXELEMENT*, FILE*);
 bool checkElement(INDEXELEMENT*, unsigned int);
 long int getOffset(INDEXELEMENT*);
-void deleteElement(INDEXELEMENT**);
+void deleteIdxElement(INDEXELEMENT**);
 
 #endif
