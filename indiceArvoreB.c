@@ -2,7 +2,7 @@
 
 struct paginaB{
 	unsigned char n;
-	indexElement *nos;
+	INDEXELEMENT **nos;
 	long int *ponteiros;
 };
 
@@ -15,7 +15,7 @@ ARVOREB *criaArvoreB(const char *filename){
 	if(filename != NULL){
 		ARVOREB *tree = (ARVOREB*)malloc(sizeof(ARVOREB));
 		if(tree != NULL){
-			tree->filename = filename;
+			tree->filename = myStrdup(filename);
 			// Cria um novo arquivo de indice
 			tree->fp = fopen(filename, "w");
 			if(tree->fp == NULL){
@@ -80,6 +80,7 @@ long int getRaiz(ARVOREB *tree){
 		fseek(tree->fp, raiz, SEEK_SET);
 		return raiz;
 	}else fprintf(stderr, "getRaiz(): Parametro invalido passado\n");
+	return -1;
 }
 
 void setRaiz(ARVOREB *tree, long int newRoot){
@@ -99,7 +100,7 @@ PAGINAB *criaPaginaB(){
 	if(page != NULL){
 		int i;
 		page->n = 0;
-		page->nos = (INDEXELEMENT*)malloc(sizeof(INDEXELEMENT) * (ORDEM_PAGINA - 1));
+		page->nos = (INDEXELEMENT**)malloc(sizeof(INDEXELEMENT*) * (ORDEM_PAGINA - 1));
 		// Verificacao de erro
 		if(page->nos == NULL){
 			free(page);
@@ -119,7 +120,7 @@ PAGINAB *criaPaginaB(){
 		}
 		// Zera todos os valores do vetor
 		for(i = 0; i < ORDEM_PAGINA; i++)
-			page->ponteiros[i] = NULL;
+			page->ponteiros[i] = -1;
 	}else fprintf(stderr, "criaPaginaB(): Erro de alocacao de memoria\n");
 	return page;
 }
