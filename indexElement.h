@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define TAMANHO_IDXELEMENT (sizeof(unsigned int) + sizeof(long int))
+
 typedef unsigned char bool;
 #define true 1;
 #define false 0;
