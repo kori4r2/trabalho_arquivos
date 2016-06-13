@@ -16,6 +16,7 @@ INDEXELEMENT *createIdxElement(unsigned int, long int);
 void readIdxElement(INDEXELEMENT*, FILE*);
 void writeIdxElement(INDEXELEMENT*, FILE*);
 int checkElement(INDEXELEMENT*, unsigned int);
+unsigned int getId(INDEXELEMENT*);
 long int getOffset(INDEXELEMENT*);
 void deleteIdxElement(INDEXELEMENT**);
 

@@ -187,7 +187,7 @@ CATALOGO *criaCatalogo(const char *nomeArquivo){
 			}
 			// Os valores do vetor sao inicializados
 			for(i = 0; i < 100; i++)
-				novoCatalogo->idList[i] = i;
+				novoCatalogo->idList[i] = (i+1);
 			// E embaralhados
 			shuffle(novoCatalogo->idList, 100);
 			novoCatalogo->filename = myStrdup(nomeArquivo);

@@ -9,6 +9,7 @@ struct paginaB{
 struct arvoreB{
 	char *filename;
 	FILE *fp;
+	int size;
 };
 
 ARVOREB *criaArvoreB(const char *filename){
@@ -33,6 +34,7 @@ ARVOREB *criaArvoreB(const char *filename){
 				return NULL;
 			}
 			escrevePaginaB(tree->fp, page);
+			tree->size = 1;
 			// Apaga memoria alocada e retorna
 			apagaPaginaB(&page);
 			fclose(tree->fp);
@@ -77,14 +79,14 @@ void apagaArvoreB(ARVOREB **tree){
 	}else fprintf(stderr, "apagaArvoreB(): Parametro invalido passado\n");
 }
 
-long int getRaiz(ARVOREB *tree){
+int getRaiz(ARVOREB *tree){
 	if(tree != NULL){
 		long int raiz = -1;
 		if(tree->fp == NULL){
 			// Caso o indice estiver fechado
 			abreIndice(tree);
 			// Obtem o endereco da raiz
-			fread(&raiz, sizeof(long int), 1, tree->fp);
+			fread(&raiz, sizeof(int), 1, tree->fp);
 			// Move o ponteiro do arquivo para la
 			fseek(tree->fp, filePos(raiz), SEEK_SET);
 		}else{
@@ -92,7 +94,7 @@ long int getRaiz(ARVOREB *tree){
 			long int curPos = ftell(tree->fp);
 			fseek(tree->fp, 0, SEEK_SET);
 			// Obtem a raiz
-			fread(&raiz, sizeof(long int), 1, tree->fp);
+			fread(&raiz, sizeof(int), 1, tree->fp);
 			// E volta para a posicao anterior
 			fseek(tree->fp, curPos, SEEK_SET);
 		}
@@ -101,17 +103,17 @@ long int getRaiz(ARVOREB *tree){
 	return -1;
 }
 
-void setRaiz(ARVOREB *tree, long int newRoot){
-	if(tree != NULL && newRoot >= sizeof(long int)){
+void setRaiz(ARVOREB *tree, int newRoot){
+	if(tree != NULL && newRoot >= sizeof(int)){
 		if(tree->fp == NULL){
 			// Se o indice estava fechado, abre e atualiza
 			abreIndice(tree);
-			fwrite(&newRoot, sizeof(long int), 1, tree->fp);
+			fwrite(&newRoot, sizeof(int), 1, tree->fp);
 		}else{
 			// Se ja estava aberto, armazena a posicao atual antes de atualizar
 			long int curPos = ftell(tree->fp);
 			fseek(tree->fp, 0, SEEK_SET);
-			fwrite(&newRoot, sizeof(long int), 1, tree->fp);
+			fwrite(&newRoot, sizeof(int), 1, tree->fp);
 			// Volta para a posicao anterior apos atualizar
 			fseek(tree->fp, curPos, SEEK_SET);
 		}
@@ -148,12 +150,137 @@ long int buscaArvoreB(ARVOREB *tree, unsigned int id){
 			// Se tiver chegado ate o fim da pagina sem encontrar e sem detectar
 			// qual a proxima pagina a ser buscada, obtem o ponteiro correspondente
 			if(next == 0)
-				next = filePos(page->ponteiros[i]);
+				next = filePos(page->ponteiros[page->n]);
 		}
 		// Caso nao tenha encontrado, libera a memoria alocada e retorna -1
 		apagaPaginaB(&page);
-	}
+	}else fprintf(stderr, "buscaArvoreB(): Parametro invalido passado\n");
 	return -1;
+}
+
+void swap(INDEXELEMENT **vector, int i, int j){
+	INDEXELEMENT *aux = vector[i];
+	vector[i] = vector[j];
+	vector[j] = aux;
+}
+
+void splitRaiz(ARVOREB *tree){
+	tree->size++;
+}
+
+void split2to3(ARVOREB *tree, int rrn){
+	tree->size++;
+}
+
+int insereArvoreB(ARVOREB *tree, INDEXELEMENT *newElement, int rrn){
+	// depth armazena qual o nivel atual na arvore
+	static int depth = -1;
+	depth++;
+	// Obtem-se a localizacao do no atual baseado no seu rrn
+	long int location;
+	if(depth == 0){
+		rrn = getRaiz(tree);
+		location = filePos(rrn);
+	}else
+		location = filePos(rrn);
+
+	// Se foi tentado verificar um rrn igual a -1, retorna -1 e volta ao nivel anterior
+	if(location == -1){
+		depth--;
+		return -1;
+	}
+
+	// Caso contrario, le a pagina salva no rrn passado
+	fseek(tree->fp, location, SEEK_SET);
+	PAGINAB *page = criaPaginaB();
+	lePaginaB(tree->fp, page);
+
+	int i, j, result, aux, childrrn;
+	bool found = false
+	result = -1;
+	// Checa todos os nos da pagina atual para descobrir onde no ovo elemento deve ser
+	// inserido
+	for(i = 0; (i < page->n) && !found; i++){
+		aux = checkElement(page->nos[i], getId(newElement));
+		if(aux == 0){
+			// Caso o elemento ja exista, exibe mensagem de erro e retorna -2
+			fprintf(stderr, "insereArvoreB(): Esse elemento ja existe\n");
+			apagaPaginaB(&page);
+			deleteIdxElement(&newElement);
+			depth--;
+			return -2;
+		}else if(aux < 0){
+			// Ao encontrar a posicao onde deve ser salvo, armazena o ponteiro correspondente
+			found = true;
+			childrrn = page->ponteiros[i];
+		}
+	}
+	if(!found)
+		childrrn = page->ponteiros[i];
+
+	// Se chama recursivamente para avaliar a posicao encontrada
+	result = insereArvoreB(tree, newElement, childrrn);
+	// Caso o no atual seja uma folha, o retorno sera -1
+	if(result == -1){
+		// A inserçao ocorre aqui
+		// Caso haja espaço no no atual
+		if(page->n < ORDEM_PAGINA){
+			// Insere o novo elemento na pagina
+			j = page->n-1;
+			page->nos[page->n++] = newElement;
+			while((checkElement(page->nos[j], getId(newElement)) < 0) && j >= 0){
+				swap(page->nos, j, j+1);
+				j--;
+			}
+			// Atualiza a pagina alterada no arquivo
+			fseek(tree->fp, filePos(rrn), SEEK_SET);
+			escrevePaginaB(tree->fp, page);
+			apagaPaginaB(&page);
+			depth--;
+			return 0;
+		}else{
+		// Caso nao haja espaco no no atual
+			//Insere o novo elemento
+			page->n++;
+			page->nos = (INDEXELEMENT**)realloc(page->nos, sizeof(INDEXELEMENT*) * page->n);
+			page->nos[page->n-1] = newElement;
+			page->ponteiros = (int*)realloc(page->ponteiros, sizeof(int) * (page->n + 1));
+			page->ponteiros[page->n] = -1;
+			// Ordena os elementos
+			j = page->n-1;
+			while((checkElement(page->nos[j], getId(newElement)) < 0) && j >= 0){
+				swap(page->nos, j, j+1);
+				j--;
+			}
+			// E escreve a pagina com tamanho anormal no final do arquivo
+			abreIndice(tree);
+			fseek(tree->fp, filePos(tree->size), SEEK_SET);
+			escrevePaginaB(tree->fp, page);
+			// Indica que o overflow deve ser analisado para redistribuição ou split
+			apagaPaginaB(&page);
+			depth--;
+			return -3;
+		}
+	}else if(result == -2){
+		// deu ruim
+		depth--;
+		apagaPaginaB(&page);
+		return -2;
+	}else if(result == -3){
+		// overflow deve ser avaliado
+		// Se possivel, realiza a redistribuição
+		// Se nao for possivel e nao for raiz, faz o split 2-to-3
+		// 	Caso gere overflow, libera memoria e retorna -3
+		// Se for a raiz, realiza o split 1-to-2
+		depth--;
+		apagaPaginaB(&page);
+		return 0;
+	}else{
+		// all gucchi
+		depth--;
+		apagaPaginaB(&page);
+		return 0;
+	}
 }
 
 //-----------------------------------------------------------------------------------------------------
@@ -188,13 +315,22 @@ PAGINAB *criaPaginaB(){
 	return page;
 }
 
+// Funcao auxiliar para acomodar o caso em que uma pagina com overflow foi escrita no arquivo
+int max(int a, int b){
+	return (a > b)? a : b;
+}
+
 void lePaginaB(FILE *fp, PAGINAB *page){
 	if(fp != NULL && page != NULL){
 		int i;
 		fread(&page->n, sizeof(unsigned char), 1, fp);
-		for(i = 0; i < ORDEM_PAGINA - 1; i++)
+		if(page->n > (ORDEM_PAGINA - 1)){
+			page->ponteiros = (int*)realloc(page->ponteiros, sizeof(int) * page->n);
+			page->nos = (INDEXELEMENT**)realloc(page->nos, sizeof(INDEXELEMENT*) * (page->n + 1));
+		}
+		for(i = 0; i < max(ORDEM_PAGINA - 1, page->n); i++)
 			readIdxElement(page->nos[i], fp);
-		for(i = 0; i < ORDEM_PAGINA; i++)
+		for(i = 0; i < max(ORDEM_PAGINA, page->n + 1); i++)
 			fread(&page->ponteiros[i], sizeof(int), 1, fp);
 	}else fprintf(stderr, "lePaginaB(): Parametro invalido passado\n");
 }
@@ -203,17 +339,20 @@ void escrevePaginaB(FILE *fp, PAGINAB *page){
 	if(fp != NULL && page != NULL){
 		int i;
 		fwrite(&page->n, sizeof(unsigned char), 1, fp);
-		for(i = 0; i < ORDEM_PAGINA - 1; i++)
+		for(i = 0; i < max(ORDEM_PAGINA - 1, page->n); i++)
 			writeIdxElement(page->nos[i], fp);
-		for(i = 0; i < ORDEM_PAGINA; i++)
+		for(i = 0; i < max(ORDEM_PAGINA, page->n + 1); i++)
 			fwrite(&page->ponteiros[i], sizeof(int), 1, fp);
 	}else fprintf(stderr, "escrevePaginaB(): Parametro invalido passado\n");
 }
 
 void apagaPaginaB(PAGINAB **page){
 	if(page != NULL && *page != NULL){
-		if((*page)->nos != NULL)
-			free((*page)->nos);
+		int i;
+		if((*page)->nos != NULL){
+			for(i = 0; i < (*page)->n; i++)
+				deleteIdxElement(&((*page)->nos[i]));
+		}
 		if((*page)->ponteiros != NULL)
 			free((*page)->ponteiros);
 		free(*page);

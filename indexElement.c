@@ -36,6 +36,14 @@ int checkElement(INDEXELEMENT *idxEl, unsigned int id){
 	return 0;
 }
 
+unsigned int getId(INDEXELEMENT *idxEl){
+	if(idxEl != NULL){
+		return idxEl->id;
+	}
+	fprintf(stderr, "getId(): Parametro invalido passado\n");
+	return 0;
+}
+
 long int getOffset(INDEXELEMENT *idxEl){
 	if(idxEl != NULL){
 		return idxEl->offset;
