@@ -164,12 +164,23 @@ void swap(INDEXELEMENT **vector, int i, int j){
 	vector[j] = aux;
 }
 
+// No inicio das 3 funcoes abaixo a pagina com tamanho acima do normal esta armazenada no
+// final do arquivo (rrn = tree->size) e caso a funcao gere overflow, a nova pagina com tamanho
+// acima do normal deve tambem ficar no final do arquivo(rrn = tree->size)
 void splitRaiz(ARVOREB *tree){
+	tree->size++;
 	tree->size++;
 }
 
-void split2to3(ARVOREB *tree, int rrn){
+bool split2to3(ARVOREB *tree, int fullPageRRN){
 	tree->size++;
+	// Retorna false caso ainda seja preciso avaliar
+	return false;
+}
+
+bool reDistribute(ARVOREB *tree, int fullPageRRN){
+	// Retorna false caso ainda seja preciso avaliar
+	return false;
 }
 
 int insereArvoreB(ARVOREB *tree, INDEXELEMENT *newElement, int rrn){
@@ -196,8 +207,9 @@ int insereArvoreB(ARVOREB *tree, INDEXELEMENT *newElement, int rrn){
 	lePaginaB(tree->fp, page);
 
 	int i, j, result, aux, childrrn;
-	bool found = false
+	bool found;
 	result = -1;
+	found = false;
 	// Checa todos os nos da pagina atual para descobrir onde no ovo elemento deve ser
 	// inserido
 	for(i = 0; (i < page->n) && !found; i++){
@@ -215,6 +227,7 @@ int insereArvoreB(ARVOREB *tree, INDEXELEMENT *newElement, int rrn){
 			childrrn = page->ponteiros[i];
 		}
 	}
+	// Ao final do for, a variavel i armazena a posicao do ponteiro onde a funcao deve descer
 	if(!found)
 		childrrn = page->ponteiros[i];
 
@@ -253,33 +266,61 @@ int insereArvoreB(ARVOREB *tree, INDEXELEMENT *newElement, int rrn){
 				j--;
 			}
 			// E escreve a pagina com tamanho anormal no final do arquivo
-			abreIndice(tree);
 			fseek(tree->fp, filePos(tree->size), SEEK_SET);
 			escrevePaginaB(tree->fp, page);
-			// Indica que o overflow deve ser analisado para redistribuição ou split
-			apagaPaginaB(&page);
-			depth--;
-			return -3;
+			if(depth == 0){
+				// se for a raiz, realiza o split 1-to-2 e retorna 0
+				splitRaiz(tree);
+				apagaPaginaB(&page);
+				depth--;
+				return 0;
+			}else{
+				// Indica que o overflow deve ser analisado para redistribuição ou split
+				apagaPaginaB(&page);
+				depth--;
+				return -3;
+			}
 		}
-	}else if(result == -2){
-		// deu ruim
-		depth--;
-		apagaPaginaB(&page);
-		return -2;
 	}else if(result == -3){
 		// overflow deve ser avaliado
 		// Se possivel, realiza a redistribuição
-		// Se nao for possivel e nao for raiz, faz o split 2-to-3
-		// 	Caso gere overflow, libera memoria e retorna -3
-		// Se for a raiz, realiza o split 1-to-2
+		if(reDistribute(tree, i)){
+			// Caso tenha sido resolvido com a redistribuicao, libera memoria e retorna 0
+			depth--;
+			apagaPaginaB(&page);
+			return 0;
+		}else{
+			// Se nao for possivel, faz o split 2-to-3
+			if(split2to3(tree, i)){
+				// Caso o split nao gere overflow, libera memoria e retorna 0
+				depth--;
+				apagaPaginaB(&page);
+				return 0;
+			}else{
+				//Caso gere overflow e nao for raiz, libera memoria e retorna -3
+				if(depth > 0){
+					depth--;
+					apagaPaginaB(&page);
+					return -3;
+				}else{
+				//Se for a raiz, realiza o split 1-to-2 e retorna 0
+					splitRaiz(tree);
+					depth--;
+					apagaPaginaB(&page);
+					return 0;
+				}
+			}
+		}
+	}else if(result == -2 || result == 0){
+		// deu ruim ou deu bom
 		depth--;
 		apagaPaginaB(&page);
-		return 0;
+		return result;
 	}else{
-		// all gucchi
+		fprintf(stderr, "insereArvoreB(): Valor de retorno invalido detectado\n");
 		depth--;
 		apagaPaginaB(&page);
-		return 0;
+		return -2;
 	}
 }
 
