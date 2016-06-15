@@ -37,8 +37,6 @@ ARVOREB *criaArvoreB(const char *filename){
 			tree->size = 1;
 			// Apaga memoria alocada e retorna
 			apagaPaginaB(&page);
-			fclose(tree->fp);
-			tree->fp = NULL;
 		}else fprintf(stderr, "criaArvoreB(): Erro de alocacao de memoria\n");
 		return tree;
 	}
@@ -46,34 +44,12 @@ ARVOREB *criaArvoreB(const char *filename){
 	return NULL;
 }
 
-void abreIndice(ARVOREB *tree){
-	if(tree != NULL){
-		if(tree->fp != NULL){
-			//fprintf(stderr, "abreIndice(): O arquivo de indice ja esta aberto\n");
-		}else{
-			tree->fp = fopen(tree->filename, "r+");
-			if(tree->fp == NULL)
-				fprintf(stderr, "abreIndice(): Erro ao abrir o indice\n");
-		}
-	}else fprintf(stderr, "abreIndice(): Parametro invalido passado\n");
-}
-
-void fechaIndice(ARVOREB *tree){
-	if(tree != NULL){
-		if(tree->fp == NULL){
-			//fprintf(stderr, "fechaIndice(): O arquivo de indice nao esta aberto\n");
-		}else{
-			fclose(tree->fp);
-			tree->fp = NULL;
-		}
-	}else fprintf(stderr, "fechaIndice(): Parametro invalido passado\n");
-}
-
 void apagaArvoreB(ARVOREB **tree){
 	if(tree != NULL && *tree != NULL){
 		if((*tree)->filename != NULL)
 			free((*tree)->filename);
-		fechaIndice(*tree);
+		if((*tree)->fp != NULL)
+			fclose((*tree)->fp);
 		free(*tree);
 		*tree = NULL;
 	}else fprintf(stderr, "apagaArvoreB(): Parametro invalido passado\n");
@@ -84,7 +60,6 @@ int getRaiz(ARVOREB *tree){
 		long int raiz = -1;
 		if(tree->fp == NULL){
 			// Caso o indice estiver fechado
-			abreIndice(tree);
 			// Obtem o endereco da raiz
 			fread(&raiz, sizeof(int), 1, tree->fp);
 			// Move o ponteiro do arquivo para la
@@ -107,7 +82,6 @@ void setRaiz(ARVOREB *tree, int newRoot){
 	if(tree != NULL && newRoot >= sizeof(int)){
 		if(tree->fp == NULL){
 			// Se o indice estava fechado, abre e atualiza
-			abreIndice(tree);
 			fwrite(&newRoot, sizeof(int), 1, tree->fp);
 		}else{
 			// Se ja estava aberto, armazena a posicao atual antes de atualizar
@@ -168,17 +142,295 @@ void swap(INDEXELEMENT **vector, int i, int j){
 // final do arquivo (rrn = tree->size) e caso a funcao gere overflow, a nova pagina com tamanho
 // acima do normal deve tambem ficar no final do arquivo(rrn = tree->size)
 void splitRaiz(ARVOREB *tree){
-	tree->size++;
-	tree->size++;
+	int i, newRootRRN, pageRRN, oldRootRRN;
+
+	oldRootRRN = getRaiz(tree);
+	PAGINAB *oldRoot = criaPaginaB();
+	fseek(tree->fp, filePos(tree->size), SEEK_SET);
+	lePaginaB(tree->fp, oldRoot);
+
+	newRootRRN = tree->size++;
+	pageRRN = tree->size++;
+	PAGINAB *newRoot = criaPaginaB();
+	PAGINAB *page = criaPaginaB();
+
+	// Copia a segunda metade da raiz antiga para a nova pagina
+	for(i = 0; i < (ORDEM_PAGINA-1) / 2; i++){
+		page->nos[i] = oldRoot->nos[((ORDEM_PAGINA-1) / 2) + 1 + i];
+		oldRoot->nos[((ORDEM_PAGINA-1) / 2) + 1 + i] = NULL;
+		page->ponteiros[i] = oldRoot->ponteiros[((ORDEM_PAGINA-1) / 2) + 1 + i];
+		oldRoot->ponteiros[((ORDEM_PAGINA-1) / 2) + 1 + i] = -1;
+	}
+	page->ponteiros[i] = oldRoot->ponteiros[((ORDEM_PAGINA-1) / 2) + 1 + i];
+	oldRoot->ponteiros[((ORDEM_PAGINA-1) / 2) + 1 + i] = -1;
+	// Promove o elemento intermendiario
+	newRoot->nos[0] = oldRoot->nos[(ORDEM_PAGINA-1) / 2];
+	oldRoot->nos[(ORDEM_PAGINA-1) / 2] = NULL;
+	// Atualiza os ponteiros da nova raiz
+	newRoot->ponteiros[0] = oldRootRRN;
+	newRoot->ponteiros[1] = pageRRN;
+	// Atualiza os tamanhos das paginas
+	newRoot->n = 1;
+	oldRoot->n = (ORDEM_PAGINA-1) / 2;
+	page->n = (ORDEM_PAGINA-1) / 2;
+	// Atualiza a raiz
+	setRaiz(tree, newRootRRN);
+	// Escreve as paginas em suas respectivas posicoes
+	fseek(tree->fp, filePos(oldRootRRN), SEEK_SET);
+	escrevePaginaB(tree->fp, oldRoot);
+	fseek(tree->fp, filePos(pageRRN), SEEK_SET);
+	escrevePaginaB(tree->fp, page);
+	fseek(tree->fp, filePos(newRootRRN), SEEK_SET);
+	escrevePaginaB(tree->fp, newRoot);
+
+	// Libera a memoria alocada
+	apagaPaginaB(&oldRoot);
+	apagaPaginaB(&page);
+	apagaPaginaB(&newRoot);
 }
 
-bool split2to3(ARVOREB *tree, int fullPageRRN){
+bool split2to3(ARVOREB *tree, PAGINAB *parent, int parentRRN, int fullPageRRN){
+	int i, newRRN = tree->size;
+	INDEXELEMENT *promotedElement;
+	PAGINAB *page = criaPaginaB();
+	PAGINAB *newPage = criaPaginaB();
+	PAGINAB *fullPage = criaPaginaB();
+	fseek(tree->fp, filePos(tree->size), SEEK_SET);
+	lePaginaB(tree->fp, fullPage);
 	tree->size++;
+	if(fullPageRRN > 0){
+		// Se possivel, realiza o split com a pagina a sua esquerda
+		fseek(tree->fp, filePos(parent->ponteiros[fullPageRRN - 1]), SEEK_SET);
+		lePaginaB(tree->fp, page);
+		// Copia os elementos da pagina irma para a nova pagina, com excecao do que sera promovido
+		for(i = 0; i < (((ORDEM_PAGINA-1) / 3) - 1); i++){
+			newPage->nos[i] = page->nos[(2 * (ORDEM_PAGINA-1) / 3) + 1 + i];
+			page->nos[(2 * (ORDEM_PAGINA-1) / 3) + 1 + i] = NULL;
+			newPage->ponteiros[i] = page->ponteiros[(2 * (ORDEM_PAGINA-1) / 3) + 1 + i];
+			page->ponteiros[(2 * (ORDEM_PAGINA-1) / 3) + 1 + i] = -1;
+		}
+		newPage->ponteiros[i] = page->ponteiros[(2 * (ORDEM_PAGINA-1) / 3) + 1 + i];
+		page->ponteiros[(2 * (ORDEM_PAGINA-1) / 3) + 1 + i] = -1;
+		// Copia o elemento do pai ,que sera substituido pelo elemento promovido da irma, para a nova pagina
+		newPage->nos[((ORDEM_PAGINA-1) / 3) - 1] = parent->nos[fullPageRRN - 1];
+		// Promove o elemento da pagina irma
+		parent->nos[fullPageRRN - 1] = page->nos[2 * (ORDEM_PAGINA-1) / 3];
+		page->nos[2 * (ORDEM_PAGINA-1) / 3] = NULL;
+		// Copia os elementos da pagina cheia para a pagina irma
+		for(i = 0; i < ((ORDEM_PAGINA-1) / 3); i++){
+			newPage->nos[((ORDEM_PAGINA-1) / 3) + i] = fullPage->nos[i];
+			newPage->ponteiros[((ORDEM_PAGINA-1) / 3) + i] = fullPage->ponteiros[i];
+		}
+		newPage->ponteiros[((ORDEM_PAGINA-1) / 3) + i] = fullPage->ponteiros[i];
+		// Armazena qual o elemento que deve ser promovido
+		promotedElement = fullPage->nos[i];
+		fullPage->nos[i] = NULL;
+		// Move os elementos que permanecerao na pagina para o inicio da mesma
+		for(i = 0; i < (2 * (ORDEM_PAGINA-1) / 3); i++){
+			fullPage->nos[i] = fullPage->nos[((ORDEM_PAGINA+1) / 3) + 1 + i];
+			fullPage->nos[((ORDEM_PAGINA+1) / 3) + 1 + i] = NULL;
+			fullPage->ponteiros[i] = fullPage->ponteiros[((ORDEM_PAGINA+1) / 3) + 1 + i];
+			fullPage->ponteiros[((ORDEM_PAGINA+1) / 3) + 1 + i] = -1;
+		}
+		fullPage->ponteiros[i] = fullPage->ponteiros[((ORDEM_PAGINA+1) / 3) + 1 + i];
+		fullPage->ponteiros[((ORDEM_PAGINA+1) / 3) + 1 + i] = -1;
+		// Volta a pagina ao tamanho normal
+		fullPage->nos = (INDEXELEMENT**)realloc(fullPage->nos, sizeof(INDEXELEMENT*) * (ORDEM_PAGINA-1));
+		fullPage->ponteiros = (int*)realloc(fullPage->ponteiros, sizeof(int) * ORDEM_PAGINA);
+		// Atualiza o tamanho das 3 paginas
+		fullPage->n = 2 * (ORDEM_PAGINA-1) / 3;
+		page->n = 2 * (ORDEM_PAGINA-1) / 3;
+		newPage->n = 2 * (ORDEM_PAGINA-1) / 3;
+		// Escreve as paginas alteradas e criadas
+		fseek(tree->fp, filePos(parent->ponteiros[fullPageRRN - 1]), SEEK_SET);
+		escrevePaginaB(tree->fp, page);
+		fseek(tree->fp, filePos(parent->ponteiros[fullPageRRN]), SEEK_SET);
+		escrevePaginaB(tree->fp, fullPage);
+		fseek(tree->fp, filePos(newRRN), SEEK_SET);
+		escrevePaginaB(tree->fp, newPage);
+		// Realiza a promocao do elemento salvo (pode causar overflow)
+		if(parent->n == ORDEM_PAGINA-1){
+			// Se necessario, aumenta o tamanho dos vetores
+			parent->nos = (INDEXELEMENT**)realloc(parent->nos, sizeof(INDEXELEMENT*) * ORDEM_PAGINA);
+			parent->ponteiros = (int*)realloc(parent->ponteiros, sizeof(int) * (ORDEM_PAGINA+1));
+		}
+		// Movimenta elementos e ponteiros para a direita para ter espaço para o novo elemento
+		parent->ponteiros[parent->n+1] = parent->ponteiros[parent->n];
+		for(i = parent->n; i > fullPageRRN; i--){
+			parent->nos[i-1] = parent->nos[i];
+			parent->ponteiros[i-1] = parent->ponteiros[i];
+		}
+		// Adiciona o novo elemento e o novo ponteiro
+		parent->nos[fullPageRRN] = promotedElement;
+		parent->ponteiros[fullPageRRN] = newRRN;
+		parent->n++;
+		// Libera memoria alocada
+		apagaPaginaB(&page);
+		apagaPaginaB(&fullPage);
+		apagaPaginaB(&newPage);
+		// Se causou overflow escreve a pagina anomala no fim do arquivo e retorna false
+		if(parent->n > (ORDEM_PAGINA-1)){
+			fseek(tree->fp, filePos(tree->size), SEEK_SET);
+			escrevePaginaB(tree->fp, parent);
+			return false;
+		// Caso contrario retorna true
+		}else{
+			return true;
+		}
+	}else{
+		// Caso contrario, faz o split com a irma a direita
+		fseek(tree->fp, filePos(parent->ponteiros[fullPageRRN + 1]), SEEK_SET);
+		lePaginaB(tree->fp, page);
+
+		// Copia os elementos da pagina cheia para a nova pagina, com excecao do elemento que sera promovido
+		for(i = 0; i < ((ORDEM_PAGINA-1) / 3); i++){
+			newPage->nos[i] = fullPage->nos[(2 * (ORDEM_PAGINA-1) / 3) + 1 + i];
+			fullPage->nos[(2 * (ORDEM_PAGINA-1) / 3) + 1 + i] = NULL;
+			newPage->ponteiros[i] = fullPage->ponteiros[(2 * (ORDEM_PAGINA-1) / 3) + 1 + i];
+			fullPage->ponteiros[(2 * (ORDEM_PAGINA-1) / 3) + 1 + i] = -1;
+		}
+		newPage->ponteiros[i] = fullPage->ponteiros[(2 * (ORDEM_PAGINA-1) / 3) + 1 + i];
+		fullPage->ponteiros[(2 * (ORDEM_PAGINA-1) / 3) + 1 + i] = -1;
+		// Copia o elemento da pagina pai que sera substituida pelo elemento promovido
+		newPage->nos[((ORDEM_PAGINA-1) / 3)] = parent->nos[fullPageRRN];
+		// Promove o elemento da pagina cheia
+		parent->nos[fullPageRRN] = fullPage->nos[2 * (ORDEM_PAGINA-1) / 3];
+		fullPage->nos[2 * (ORDEM_PAGINA-1) / 3] = NULL;
+		// Ajusta o tamanho da pagina cheia
+		fullPage->nos = (INDEXELEMENT**)realloc(fullPage->nos, sizeof(INDEXELEMENT*) * (ORDEM_PAGINA-1));
+		fullPage->ponteiros = (int*)realloc(fullPage->ponteiros, sizeof(int) * ORDEM_PAGINA);
+		// Copia os elementos da pagina irma para a nova pagina, com excecao do elemento promovido
+		for(i = 0; i < ((ORDEM_PAGINA-1) / 3) - 1; i++){
+			newPage->nos[((ORDEM_PAGINA-1) / 3) + 1 + i] = page->nos[i];
+			newPage->ponteiros[((ORDEM_PAGINA-1) / 3) + 1 + i] = page->ponteiros[i];
+		}
+		newPage->ponteiros[((ORDEM_PAGINA-1) / 3) + 1 + i] = page->ponteiros[i];
+		// Armazena o elemento a ser promovido
+		promotedElement = page->nos[((ORDEM_PAGINA-1) / 3) - 1];
+		// Move todos os elementos da pagina irma para a esquerda
+		for(i = 0; i < 2 * (ORDEM_PAGINA-1) / 3; i++){
+			page->nos[i] = page->nos[((ORDEM_PAGINA-1) / 3) + i];
+			page->nos[((ORDEM_PAGINA-1) / 3) + i] = NULL;
+			page->ponteiros[i] = page->ponteiros[((ORDEM_PAGINA-1) / 3) + i];
+			page->ponteiros[((ORDEM_PAGINA-1) / 3) + i] = -1;
+		}
+		page->ponteiros[i] = page->ponteiros[((ORDEM_PAGINA-1) / 3) + i];
+		page->ponteiros[((ORDEM_PAGINA-1) / 3) + i] = -1;
+
+		// Atualiza o tamanho das 3 paginas
+		fullPage->n = 2 * (ORDEM_PAGINA-1) / 3;
+		page->n = 2 * (ORDEM_PAGINA-1) / 3;
+		newPage->n = 2 * (ORDEM_PAGINA-1) / 3;
+		// Escreve as paginas alteradas e criadas
+		fseek(tree->fp, filePos(parent->ponteiros[fullPageRRN - 1]), SEEK_SET);
+		escrevePaginaB(tree->fp, page);
+		fseek(tree->fp, filePos(parent->ponteiros[fullPageRRN]), SEEK_SET);
+		escrevePaginaB(tree->fp, fullPage);
+		fseek(tree->fp, filePos(newRRN), SEEK_SET);
+		escrevePaginaB(tree->fp, newPage);
+		// Realiza a promocao do elemento salvo (pode causar overflow)
+		if(parent->n == ORDEM_PAGINA-1){
+			// Se necessario, aumenta o tamanho dos vetores
+			parent->nos = (INDEXELEMENT**)realloc(parent->nos, sizeof(INDEXELEMENT*) * ORDEM_PAGINA);
+			parent->ponteiros = (int*)realloc(parent->ponteiros, sizeof(int) * (ORDEM_PAGINA+1));
+		}
+
+		// Movimenta elementos e ponteiros para a direita para ter espaço para o novo elemento
+		parent->ponteiros[parent->n+1] = parent->ponteiros[parent->n];
+		for(i = parent->n; i > fullPageRRN+1; i--){
+			parent->nos[i-1] = parent->nos[i];
+			parent->ponteiros[i-1] = parent->ponteiros[i];
+		}
+		// Adiciona o novo elemento e o novo ponteiro
+		parent->nos[fullPageRRN+1] = promotedElement;
+		parent->ponteiros[fullPageRRN+1] = newRRN;
+		parent->n++;
+		// Libera memoria alocada
+		apagaPaginaB(&page);
+		apagaPaginaB(&fullPage);
+		apagaPaginaB(&newPage);
+		// Se causou overflow escreve a pagina anomala no fim do arquivo e retorna false
+		if(parent->n > (ORDEM_PAGINA-1)){
+			fseek(tree->fp, filePos(tree->size), SEEK_SET);
+			escrevePaginaB(tree->fp, parent);
+			return false;
+		// Caso contrario retorna true
+		}else{
+			return true;
+		}
+	}
 	// Retorna false caso ainda seja preciso avaliar
 	return false;
 }
 
-bool reDistribute(ARVOREB *tree, int fullPageRRN){
+bool reDistribute(ARVOREB *tree, PAGINAB *parent, int parentRRN, int fullPageRRN){
+	int i;
+	PAGINAB *page = criaPaginaB();
+	PAGINAB *fullPage = criaPaginaB();
+	fseek(tree->fp, filePos(tree->size), SEEK_SET);
+	lePaginaB(tree->fp, fullPage);
+	// Avalia se e possivel fazer a redistribuicao usando o no vizinho a esquerda
+	if(fullPageRRN > 0){
+		fseek(tree->fp, filePos(parent->ponteiros[fullPageRRN - 1]), SEEK_SET);
+		lePaginaB(tree->fp, page);
+		if(page->n < ORDEM_PAGINA  -1){
+			// Realiza a redistribuicao
+			page->nos[page->n++] = parent->nos[fullPageRRN-1];
+			page->ponteiros[page->n] = fullPage->ponteiros[0];
+			parent->nos[fullPageRRN-1] = fullPage->nos[0];
+			for(i = 0; i < ORDEM_PAGINA; i++){
+				fullPage->nos[i] = fullPage->nos[i+1];
+				fullPage->ponteiros[i] = fullPage->ponteiros[i+1];
+			}
+			fullPage->ponteiros[i] = fullPage->ponteiros[i+1];
+				// Ajusta o tamanho da pagina anormal
+			fullPage->nos = (INDEXELEMENT**)realloc(fullPage->nos, sizeof(INDEXELEMENT*) * (ORDEM_PAGINA - 1));
+			fullPage->ponteiros = (int*)realloc(fullPage->ponteiros, sizeof(int) * ORDEM_PAGINA);
+			// Reescreve as paginas alteradas
+			fseek(tree->fp, filePos(parentRRN), SEEK_SET);
+			escrevePaginaB(tree->fp, parent);
+			fseek(tree->fp, filePos(parent->ponteiros[fullPageRRN]), SEEK_SET);
+			escrevePaginaB(tree->fp, fullPage);
+			fseek(tree->fp, filePos(parent->ponteiros[fullPageRRN-1]), SEEK_SET);
+			escrevePaginaB(tree->fp, page);
+			// Libera a memoria alocada e retorna true;
+			apagaPaginaB(&page);
+			apagaPaginaB(&fullPage);
+			return true;
+		}
+	}
+	// Avalia se e possivel fazer a redistribuicao usando o no vizinho a direita
+	if(fullPageRRN < ORDEM_PAGINA - 1){
+		fseek(tree->fp, filePos(parent->ponteiros[fullPageRRN+1]), SEEK_SET);
+		lePaginaB(tree->fp, page);
+		if(page->n < ORDEM_PAGINA - 1){
+			// Realiza a redistribuicao
+			page->ponteiros[page->n] = page->ponteiros[page->n-1];
+			for(i = page->n - 1; i > 0; i--){
+				page->nos[i] = page->nos[i-1];
+				page->ponteiros[i] = page->ponteiros[i-1];
+			}
+			page->nos[0] = parent->nos[fullPageRRN-1];
+			page->ponteiros[0] = fullPage->ponteiros[fullPage->n--];
+			parent->nos[fullPageRRN-1] = fullPage->nos[fullPage->n];
+			// Ajusta o tamanho da pagina anormal
+			fullPage->nos = (INDEXELEMENT**)realloc(fullPage->nos, sizeof(INDEXELEMENT*) * (ORDEM_PAGINA - 1));
+			fullPage->ponteiros = (int*)realloc(fullPage->ponteiros, sizeof(int) * ORDEM_PAGINA);
+			// Reescreve as paginas alteradas
+			fseek(tree->fp, filePos(parentRRN), SEEK_SET);
+			escrevePaginaB(tree->fp, parent);
+			fseek(tree->fp, filePos(parent->ponteiros[fullPageRRN]), SEEK_SET);
+			escrevePaginaB(tree->fp, fullPage);
+			fseek(tree->fp, filePos(parent->ponteiros[fullPageRRN+1]), SEEK_SET);
+			escrevePaginaB(tree->fp, page);
+			// Libera a memoria alocada e retorna true;
+			apagaPaginaB(&page);
+			apagaPaginaB(&fullPage);
+			return true;
+		}
+	}
+	apagaPaginaB(&page);
+	apagaPaginaB(&fullPage);
 	// Retorna false caso ainda seja preciso avaliar
 	return false;
 }
@@ -237,7 +489,7 @@ int insereArvoreB(ARVOREB *tree, INDEXELEMENT *newElement, int rrn){
 	if(result == -1){
 		// A inserçao ocorre aqui
 		// Caso haja espaço no no atual
-		if(page->n < ORDEM_PAGINA){
+		if(page->n < ORDEM_PAGINA-1){
 			// Insere o novo elemento na pagina
 			j = page->n-1;
 			page->nos[page->n++] = newElement;
@@ -284,14 +536,14 @@ int insereArvoreB(ARVOREB *tree, INDEXELEMENT *newElement, int rrn){
 	}else if(result == -3){
 		// overflow deve ser avaliado
 		// Se possivel, realiza a redistribuição
-		if(reDistribute(tree, i)){
+		if(reDistribute(tree, page, rrn, i)){
 			// Caso tenha sido resolvido com a redistribuicao, libera memoria e retorna 0
 			depth--;
 			apagaPaginaB(&page);
 			return 0;
 		}else{
 			// Se nao for possivel, faz o split 2-to-3
-			if(split2to3(tree, i)){
+			if(split2to3(tree, page, rrn, i)){
 				// Caso o split nao gere overflow, libera memoria e retorna 0
 				depth--;
 				apagaPaginaB(&page);
@@ -370,7 +622,7 @@ void lePaginaB(FILE *fp, PAGINAB *page){
 			page->nos = (INDEXELEMENT**)realloc(page->nos, sizeof(INDEXELEMENT*) * (page->n + 1));
 		}
 		for(i = 0; i < max(ORDEM_PAGINA - 1, page->n); i++)
-			readIdxElement(page->nos[i], fp);
+			page->nos[i] = readIdxElement(fp);
 		for(i = 0; i < max(ORDEM_PAGINA, page->n + 1); i++)
 			fread(&page->ponteiros[i], sizeof(int), 1, fp);
 	}else fprintf(stderr, "lePaginaB(): Parametro invalido passado\n");
@@ -393,6 +645,7 @@ void apagaPaginaB(PAGINAB **page){
 		if((*page)->nos != NULL){
 			for(i = 0; i < (*page)->n; i++)
 				deleteIdxElement(&((*page)->nos[i]));
+			free((*page)->nos);
 		}
 		if((*page)->ponteiros != NULL)
 			free((*page)->ponteiros);

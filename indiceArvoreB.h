@@ -17,10 +17,10 @@ typedef struct paginaB PAGINAB;
 
 
 ARVOREB *criaArvoreB(const char*);
-void abreIndice(ARVOREB*);
-void fechaIndice(ARVOREB*);
 int getRaiz(ARVOREB*);
 void setRaiz(ARVOREB*, int);
+int insereArvoreB(ARVOREB*, INDEXELEMENT*, int);
+void apagaArvoreB(ARVOREB**);
 
 PAGINAB *criaPaginaB();
 void lePaginaB(FILE*, PAGINAB*);

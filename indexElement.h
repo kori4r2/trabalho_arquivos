@@ -13,7 +13,7 @@ typedef unsigned char bool;
 typedef struct idxElement INDEXELEMENT;
 
 INDEXELEMENT *createIdxElement(unsigned int, long int);
-void readIdxElement(INDEXELEMENT*, FILE*);
+INDEXELEMENT *readIdxElement(FILE*);
 void writeIdxElement(INDEXELEMENT*, FILE*);
 int checkElement(INDEXELEMENT*, unsigned int);
 unsigned int getId(INDEXELEMENT*);

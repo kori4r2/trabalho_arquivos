@@ -3,6 +3,7 @@
 // Pedro Henrique Siqueira de Oliveira - nUSP 8922006
 
 #include "filmes.h"
+#include "indiceArvoreB.h"
 
 #define FIM_CAMPO '|'
 #define FIM_REGISTRO '^'
@@ -21,6 +22,7 @@ struct catalogo{
 	int n;
 	int *idList;
 	char *filename;
+	ARVOREB* arvoreb;
 };
 
 // Funcoes de filme-------------------------------------------------------------------------------------------
@@ -43,7 +45,7 @@ FILME *criaFilme(int ano, int dur, const char *titulo, const char *descr, const 
 
 		return novoFilme;
 	}else fprintf(stderr, "criaFilme: parametro invalido passado\n");
-	
+
 	return NULL;
 }
 
@@ -191,6 +193,12 @@ CATALOGO *criaCatalogo(const char *nomeArquivo){
 			// E embaralhados
 			shuffle(novoCatalogo->idList, 100);
 			novoCatalogo->filename = myStrdup(nomeArquivo);
+			novoCatalogo->arvoreb = criaArvoreB("IDindex.idx");
+			if(novoCatalogo->arvoreb == NULL){
+				apagaCatalogo(&novoCatalogo);
+				fprintf(stderr, "criaCatalogo: erro ao criar arquivo de indice\n");
+				return NULL;
+			}
 			// Assim que salva o nome de arquivo, tenta criar um novo arquivo, apagando qualquer
 			// arquivo anterior de mesmo nome
 			FILE *fp = fopen(novoCatalogo->filename, "wb+");
@@ -210,8 +218,12 @@ CATALOGO *criaCatalogo(const char *nomeArquivo){
 
 void apagaCatalogo(CATALOGO **catalogo){
 	if(catalogo != NULL && *catalogo != NULL){
+		if((*catalogo)->idList != NULL)
+			free((*catalogo)->idList);
 		if((*catalogo)->filename != NULL)
 			free((*catalogo)->filename);
+		if((*catalogo)->arvoreb != NULL)
+			apagaArvoreB(&(*catalogo)->arvoreb);
 		free(*catalogo);
 		*catalogo = NULL;
 	}else fprintf(stderr, "apagaCatalogo: parametro invalido passado\n");
@@ -220,13 +232,19 @@ void apagaCatalogo(CATALOGO **catalogo){
 void insereFilme(CATALOGO *catalogo, FILME **filme){
 	// Checa se os parametros sao validos e tenta abrir o arquivo de dados
 	if(catalogo != NULL && filme != NULL && *filme != NULL){
-		FILE *fp = fopen(catalogo->filename, "ab");
+		FILE *fp = fopen(catalogo->filename, "r+b");
 		if(fp == NULL)
 			fprintf(stderr, "insereFilme: erro ao abrir o arquivo\n");
 		else{
+			fseek(fp, 0, SEEK_END);
+			long int offset = ftell(fp);
 			// Determina o id do filme sendo salvo e
 			// incrementa o contador do catalogo
 			(*filme)->id = catalogo->idList[(catalogo->n++)%100];
+			// Alteracoes da ARVOREB:
+			INDEXELEMENT *newElement = createIdxElement((*filme)->id, offset);
+			insereArvoreB(catalogo->arvoreb, newElement, 0);
+			deleteIdxElement(&newElement);
 			// Escreve as informacoes no arquivo e apaga o filme
 			escreveFilme(fp, *filme);
 			apagaFilme(filme);

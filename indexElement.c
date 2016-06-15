@@ -14,17 +14,31 @@ INDEXELEMENT *createIdxElement(unsigned int id, long int offset){
 	return newElement;
 }
 
-void readIdxElement(INDEXELEMENT *idxEl, FILE *fp){
-	if(idxEl != NULL && fp != NULL){
-		fread(&idxEl->id, sizeof(unsigned int), 1, fp);
-		fread(&idxEl->offset, sizeof(long int), 1, fp);
+INDEXELEMENT *readIdxElement(FILE *fp){
+	if(fp != NULL){
+		unsigned int id;
+		long int offset;
+		fread(&id, sizeof(unsigned int), 1, fp);
+		fread(&offset, sizeof(long int), 1, fp);
+		if(id == 0 && offset == 0)
+			return NULL;
+		else
+			return createIdxElement(id, offset);
 	}else fprintf(stderr, "readIdxElement(): Parametro invalido passado\n");
+	return NULL;
 }
 
 void writeIdxElement(INDEXELEMENT *idxEl, FILE *fp){
-	if(idxEl != NULL && fp != NULL){
-		fwrite(&idxEl->id, sizeof(unsigned int), 1, fp);
-		fwrite(&idxEl->offset, sizeof(long int), 1, fp);
+	if(fp != NULL){
+		unsigned int id = 0;
+		long int offset = 0;
+		if(idxEl != NULL){
+			fwrite(&idxEl->id, sizeof(unsigned int), 1, fp);
+			fwrite(&idxEl->offset, sizeof(long int), 1, fp);
+		}else{
+			fwrite(&id, sizeof(unsigned int), 1, fp);
+			fwrite(&offset, sizeof(long int), 1, fp);
+		}
 	} else fprintf(stderr, "writeIdxElement(): Parametro invalido passado\n");
 }
 
